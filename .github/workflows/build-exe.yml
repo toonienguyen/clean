@@ -1,0 +1,86 @@
+name: Build EXE
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, master]
+    tags: ["v*"]
+
+jobs:
+  # Bản chạy được Windows 7 / Server 2012 (target tier 3 -> cần nightly + build-std)
+  build-win7:
+    name: win7+ ${{ matrix.arch }}
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            target: x86_64-win7-windows-msvc
+          - arch: x86
+            target: i686-win7-windows-msvc
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cài Rust nightly + rust-src
+        run: |
+          rustup toolchain install nightly --profile minimal --component rust-src
+          rustup default nightly
+
+      - name: Build release
+        run: cargo build --release -Z build-std=std,panic_abort --target ${{ matrix.target }}
+
+      - name: Đổi tên EXE
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Copy-Item "target/${{ matrix.target }}/release/clean_ram.exe" "dist/ToonieCleanRam-win7-${{ matrix.arch }}.exe"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ToonieCleanRam-win7-${{ matrix.arch }}
+          path: dist/*.exe
+          if-no-files-found: error
+
+  # Bản dự phòng cho Windows 10 / Server 2016 trở lên (toolchain stable, build thường)
+  build-modern:
+    name: modern x64 (Win10+)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cài Rust stable
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+
+      - name: Build release
+        run: cargo build --release
+
+      - name: Đổi tên EXE
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Copy-Item "target/release/clean_ram.exe" "dist/ToonieCleanRam-win10-x64.exe"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ToonieCleanRam-win10-x64
+          path: dist/*.exe
+          if-no-files-found: error
+
+  # Khi push tag dạng v1.0.0 thì tự đính kèm EXE vào GitHub Release
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [build-win7, build-modern]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: out
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: out/*.exe

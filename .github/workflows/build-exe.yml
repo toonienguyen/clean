@@ -1,4 +1,4 @@
-name: Build Toonie Clean.exe
+name: Build EXE
 
 on:
   workflow_dispatch:
@@ -7,17 +7,29 @@ on:
 
 jobs:
   build:
+    name: Windows 7 / Server 2012 x64
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install Rust 1.77.2 (Windows 8 / Server 2012 compatible)
+
+      - name: Cài Rust nightly + rust-src
         run: |
-          rustup toolchain install 1.77.2 --profile minimal
-          rustup default 1.77.2
+          rustup toolchain install nightly --profile minimal --component rust-src
+          rustup default nightly
+          rustc -Vv
+          cargo -V
+
       - name: Build release
-        run: cargo build --release
-      - name: Upload exe
-        uses: actions/upload-artifact@v4
+        run: cargo build --release -Z build-std=std,panic_abort --target x86_64-win7-windows-msvc --verbose
+
+      - name: Gom EXE
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Copy-Item "target/x86_64-win7-windows-msvc/release/clean_ram.exe" "dist/ToonieCleanRam.exe"
+
+      - uses: actions/upload-artifact@v4
         with:
-          name: ToonieRemoter
-          path: target/release/toonie_remoter.exe
+          name: ToonieCleanRam
+          path: dist/ToonieCleanRam.exe
+          if-no-files-found: error

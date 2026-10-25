@@ -44,11 +44,9 @@ cargo +nightly build --release -Z build-std=std,panic_abort --target x86_64-win7
 
 EXE: `target\x86_64-win7-windows-msvc\release\clean_ram.exe`
 
-Bản x86 (32-bit): thay target bằng `i686-win7-windows-msvc`.
-
 ### Build bằng GitHub Actions
 
-Đẩy cả thư mục này lên repo GitHub (nhánh `main`), vào tab **Actions** → **Build EXE** → **Run workflow** (hoặc tự chạy khi push). EXE nằm ở mục **Artifacts** cuối trang run: `ToonieCleanRam-win7-x64`, `ToonieCleanRam-win7-x86`, `ToonieCleanRam-win10-x64`. Push tag dạng `v1.0.0` thì EXE được đính kèm vào Release. Workflow chưa được chạy thử.
+Đẩy thư mục này lên repo GitHub, vào tab **Actions** → **Build EXE** → **Run workflow**. EXE (`ToonieCleanRam.exe`, x64, Windows 7 / Server 2012 trở lên) nằm ở mục **Artifacts** cuối trang run. Workflow chưa được xác nhận chạy thành công.
 
 Nếu chỉ cần chạy Windows 10 / Server 2016 trở lên, build thường:
 

@@ -1,0 +1,17 @@
+[package]
+name = "clean_ram"
+version = "1.0.0"
+edition = "2021"
+build = "build.rs"
+
+[dependencies]
+
+[target.'cfg(windows)'.build-dependencies]
+embed-resource = "2.5"
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
